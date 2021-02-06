@@ -10,74 +10,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
-temp=""
-temp2=""
-temp3=""
-temp4=""
 DRIVER_NAME = "Microsoft Access Driver (*.mdb, *.accdb)"
 #DB_PATH ="C:/Users/TCL A3 4500/Desktop/Programa pablo/PanelControlFR_db.accdb"
-DB_PATH ="C:/Users/Mantenimiento/Desktop/yella/PanelControlFR_db.accdb"
-FI="14/09/2020"
-FF="18/09/2020"
-linea="LB"
-paradas=0
+#DB_PATH ="C:/Users/Mantenimiento/Desktop/yella/PanelControlFR_db.accdb"
+DB_PATH ="M:/PanelControlFR_db.accdb"
 ListaArticulos=[]
-
-def Filtra_Linea(dato):
-    i=len(dato)
-    j=0
-    dato1 = []
-    while(i > 0):
-        fila=list(dato[j])
-        if(fila[1] == linea):
-            dato1.append(dato[j])
-        i=i-1
-        j=j+1
-    return dato1
-
-def Suma_Minutos(dato):
-    global paradas
-    i=len(dato)
-    i=i-1
-    j=0
-    suma=0
-    Hora_Parada=0
-    Hora_Arranque=0
-    while(i != j):
-        temp=dato[j]
-        if(temp[2] == 'A' or temp[2] == 'AD'):
-            Hora_Parada=temp[4]
-            while(temp[2] != 'P' or temp[2] != 'PD'):
-                if(j!=i):
-                    j=j+1
-                    temp=dato[j]
-                else:
-                    break
-                break
-            Hora_Arranque = temp[4]
-            suma=suma+Resta_Tiempo(Hora_Parada,Hora_Arranque)
-            paradas=paradas+1 #cuento cantidad de paradas
-        if(j!=i):
-            j=j+1
-        else:
-            break
-    print("La cantidad de pardas fue: " + str(paradas))
-    return suma
-
-def Resta_Tiempo(HP,HA):
-    tiempo = timedelta(
-    days=0,
-    seconds=0,
-    microseconds=0,
-    milliseconds=0,
-    minutes=0,
-    hours=0,
-    weeks=0
-    )
-    suma=0
-    tiempo=HA-HP
-    suma=int(tiempo.seconds/60)
-    return suma
 
 def Crear_Lista(id):
     global dato1
@@ -185,28 +122,35 @@ class articulo:
         self.Descripcion = Descripcion
 
 
+while(1):
+    now = datetime.now()
+    hora = now.strftime('%H')
+    minutos = now.strftime('%M')
 
-now = datetime.now()
-fecha = now.strftime('%d/%m/%Y')
-try:
-    conn = pyodbc.connect("Driver={%s};DBQ=%s;" % (DRIVER_NAME, DB_PATH))
-    cursor = conn.cursor()
-    fecha="03/02/2021"
-    cursor.execute("SELECT Solicita,IdDetalleSalidaMat,Descripcion from SalidaMaterialDet WHERE IdDetalleSalidaMat IN (SELECT pedido from (recepciones INNER JOIN SC_pendiente ON recepciones.N_ORDEN_CO = SC_pendiente.OC) WHERE FECHA_MOV = ?)  ORDER BY Solicita Desc;",(fecha))
-    PedidosNuevos=cursor.fetchall()
-    cursor.close()
-    conn.close()
-    dato1=list(PedidosNuevos)
-    while(len(dato1)>0):  
-        dato=dato1[0]
-        id=dato[0]
-        print(id)
-        objeto=Crear_Lista(id)
-        #if(id==101):
-        Enviar_Email(objeto)
-        print(len(objeto))
-except:
-    print("Error de conexion con la BDD")
+    if(hora == "14" and minutos == "00"):
+        try:
+            conn = pyodbc.connect("Driver={%s};DBQ=%s;" % (DRIVER_NAME, DB_PATH))
+            cursor = conn.cursor()
+            now = datetime.now()
+            fecha = now.strftime('%d/%m/%Y')
+            #fecha = "02/02/2021"
+            cursor.execute("SELECT Solicita,IdDetalleSalidaMat,Descripcion from SalidaMaterialDet WHERE IdDetalleSalidaMat IN (SELECT pedido from (recepciones INNER JOIN SC_pendiente ON recepciones.N_ORDEN_CO = SC_pendiente.OC) WHERE FECHA_MOV = ?)  ORDER BY Solicita Desc;",(fecha))
+            PedidosNuevos=cursor.fetchall()
+            print(PedidosNuevos)
+            cursor.close()
+            conn.close()
+            dato1=list(PedidosNuevos)
+            while(len(dato1)>0):  
+                dato=dato1[0]
+                id=dato[0]
+                print(id)
+                objeto=Crear_Lista(id)
+                #if(id==101):
+                Enviar_Email(objeto)
+                print(len(objeto))
+        except:
+            print("Error de conexion con la BDD")
+    time.sleep(60)
 
 
 
