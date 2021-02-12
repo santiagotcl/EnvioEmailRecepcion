@@ -127,35 +127,47 @@ while(1):
     hora = now.strftime('%H')
     minutos = now.strftime('%M')
 
-    if(hora == "14" and minutos == "00"):
+    if(minutos == "00"):
         try:
             conn = pyodbc.connect("Driver={%s};DBQ=%s;" % (DRIVER_NAME, DB_PATH))
             cursor = conn.cursor()
-            now = datetime.now()
-            fecha = now.strftime('%d/%m/%Y')
-            #fecha = "02/02/2021"
-            cursor.execute("SELECT Solicita,IdDetalleSalidaMat,Descripcion from SalidaMaterialDet WHERE IdDetalleSalidaMat IN (SELECT pedido from (recepciones INNER JOIN SC_pendiente ON recepciones.N_ORDEN_CO = SC_pendiente.OC) WHERE FECHA_MOV = ?)  ORDER BY Solicita Desc;",(fecha))
-            PedidosNuevos=cursor.fetchall()
-            print(PedidosNuevos)
+            cursor.execute("SELECT idrecepcion from recepciones ORDER BY Ultimo desc;")
+            UltimoEnviado=cursor.fetchall()
+            UltimoEnviado=list(UltimoEnviado[0])
+            UltimoEnviado=list(UltimoEnviado)
+            UltimoEnviado=UltimoEnviado[0]
+            cursor.execute("SELECT idrecepcion from recepciones ORDER BY idrecepcion desc;")
+            Ultimo=cursor.fetchall()
+            Ultimo=list(Ultimo[0])
+            Ultimo=list(Ultimo)
+            Ultimo=Ultimo[0]
             cursor.close()
             conn.close()
-            dato1=list(PedidosNuevos)
-            while(len(dato1)>0):  
-                dato=dato1[0]
-                id=dato[0]
-                print(id)
-                objeto=Crear_Lista(id)
-                #if(id==101):
-                Enviar_Email(objeto)
-                print(len(objeto))
+            if(Ultimo != UltimoEnviado):
+                conn = pyodbc.connect("Driver={%s};DBQ=%s;" % (DRIVER_NAME, DB_PATH))
+                cursor = conn.cursor()
+            #cursor.execute("SELECT Solicita,IdDetalleSalidaMat,Descripcion from SalidaMaterialDet WHERE IdDetalleSalidaMat IN (SELECT pedido from (recepciones INNER JOIN SC_pendiente ON recepciones.N_ORDEN_CO = SC_pendiente.OC) WHERE FECHA_MOV = ?)  ORDER BY Solicita Desc;",(fecha))
+                cursor.execute("SELECT Solicita,IdDetalleSalidaMat,Descripcion from SalidaMaterialDet WHERE IdDetalleSalidaMat IN (SELECT pedido from (recepciones INNER JOIN SC_pendiente ON recepciones.N_ORDEN_CO = SC_pendiente.OC) WHERE idrecepcion BETWEEN ? and ?)  ORDER BY Solicita Desc;",((UltimoEnviado+1),Ultimo))
+            #cursor.execute("SELECT Solicita,IdDetalleSalidaMat,Descripcion from SalidaMaterialDet WHERE IdDetalleSalidaMat IN (SELECT pedido from (recepciones INNER JOIN SC_pendiente ON recepciones.N_ORDEN_CO = SC_pendiente.OC) WHERE idrecepcion BETWEEN 9193 and 9211)  ORDER BY Solicita Desc;")
+                PedidosNuevos=cursor.fetchall()
+                print(PedidosNuevos)
+                dato1=list(PedidosNuevos)
+                print(len(dato1))
+                if(len(dato1)>1):
+                    while(len(dato1)>0):  
+                        dato=dato1[0]
+                        id=dato[0]
+                        print(id)
+                        objeto=Crear_Lista(id)
+                        Enviar_Email(objeto)
+                        print(len(objeto))
+                cursor.execute("UPDATE recepciones SET Ultimo = ? WHERE idrecepcion = ?",(Ultimo,Ultimo))
+                cursor.commit()
+                cursor.close()
+                conn.close()            
         except:
             print("Error de conexion con la BDD")
     time.sleep(60)
-
-
-
-
-
 
 
 
