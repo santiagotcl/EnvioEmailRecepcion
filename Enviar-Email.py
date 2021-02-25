@@ -40,13 +40,11 @@ def Enviar_Email(contenido1):
     destinatarios=list()
     conn = pyodbc.connect("Driver={%s};DBQ=%s;" % (DRIVER_NAME, DB_PATH))
     cursor = conn.cursor()
-    print(contenido[0].id)
     cursor.execute("SELECT Email,Persona from Personal WHERE IdPersonal = ?;",(contenido[0].id))
     email=cursor.fetchall()
     email=list(email)
     email=list(email[0])
     email1=email[0]
-    #email1="queti"
     print(email)
     cursor.close()
     conn.close()
@@ -83,7 +81,7 @@ def Enviar_Email(contenido1):
     except:
         remitente = 'dmfideosrivoli@gmail.com'
         destinatarios.pop(0)
-        destinatarios=['santiagocuozzo2@gmail.com'] #email del jefe de deposito
+        destinatarios=['jefe-mp.insumos@fideosrivoli.com'] #email del jefe de deposito
         asunto = 'Fallo al enviar E-mail'
         cuerpo = "Error al enviar mensaje, falla de conexion, E-mail inexistente o mal escrito, llegaron para la parsona "+email[1]+" los siguientes materiales:"
         i=len(contenido)
@@ -121,7 +119,7 @@ class articulo:
         self.solicita = solicita
         self.Descripcion = Descripcion
 
-
+print("Programa de Notificacion de llegada de materiales corriendo...")
 while(1):
     now = datetime.now()
     hora = now.strftime('%H')
@@ -152,19 +150,19 @@ while(1):
                 PedidosNuevos=cursor.fetchall()
                 print(PedidosNuevos)
                 dato1=list(PedidosNuevos)
-                print(len(dato1))
                 if(len(dato1)>1):
-                    while(len(dato1)>0):  
+                    while(len(dato1)>0):
                         dato=dato1[0]
                         id=dato[0]
                         print(id)
                         objeto=Crear_Lista(id)
-                        Enviar_Email(objeto)
-                        print(len(objeto))
+                        #Enviar_Email(objeto)
                 cursor.execute("UPDATE recepciones SET Ultimo = ? WHERE idrecepcion = ?",(Ultimo,Ultimo))
                 cursor.commit()
                 cursor.close()
-                conn.close()            
+                conn.close()
+            else:
+                print("Ups!... a horas: " + hora +":"+ minutos +" no llego nada....")          
         except:
             print("Error de conexion con la BDD")
     time.sleep(60)
